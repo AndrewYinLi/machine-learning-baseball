@@ -32,14 +32,12 @@ if len(sys.argv) > 1:
 		statcastdb.execute("DELETE FROM statcast WHERE rowid NOT IN (SELECT MIN(rowid) FROM statcast GROUP BY sv_id, batter, pitcher)")
 		statcastdb.execute("DELETE FROM statcast WHERE description = foul")
 		statcastdb.execute("ALTER TABLE statcast ADD batter_name TEXT")
+		statcastdb.execute("UPDATE statcast SET description='hit_into_play' WHERE description='hit_into_play_score'")
+		statcastdb.execute("DELETE FROM statcast WHERE description!='hit_into_play'")
 		statcastdb.commit()
 		#statcastdb.close()
-
 		print("Database done processing!")
 
-statcastdb.execute("UPDATE statcast SET description='hit_into_play' WHERE description='hit_into_play_score'")
-statcastdb.execute("DELETE FROM statcast WHERE description!='hit_into_play'")
-statcastdb.commit()
 allBatterEntries = statcastdb.execute("SELECT batter FROM statcast").fetchall()
 uniqueBatterEntriesSet = set(allBatterEntries)
 uniqueBatterEntriesList = list(uniqueBatterEntriesSet)

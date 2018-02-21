@@ -5,7 +5,7 @@ import sys
 
 # scikitlearn goes here lol
 
-statcastdb = sqlite3.connect('raw2017.db') # Defining database
+statcastdb = sqlite3.connect('raw2017.db') # Defining statcast database for MLB 2017 season
 
 # Defining all 30 MLB team abbreviations
 teams = ['ARI', 'ATL', 'BAL', 'BOS', 'CHC', 'CIN', 
@@ -31,14 +31,37 @@ if len(sys.argv) > 1:
 		statcastdb.commit()
 		statcastdb.execute("DELETE FROM statcast WHERE rowid NOT IN (SELECT MIN(rowid) FROM statcast GROUP BY sv_id, batter, pitcher)")
 		statcastdb.execute("DELETE FROM statcast WHERE description = foul")
+		statcastdb.execute("ALTER TABLE statcast ADD batter_name TEXT")
+		statcastdb.commit()
 		#statcastdb.close()
 
 		print("Database done processing!")
-statcastdb.execute("DELETE FROM statcast WHERE description!='hit_into_play' AND description!='hit_into_play_score'")
+
+statcastdb.execute("UPDATE statcast SET description='hit_into_play' WHERE description='hit_into_play_score'")
+statcastdb.execute("DELETE FROM statcast WHERE description!='hit_into_play'")
 statcastdb.commit()
-allBatterEntries = statcastdb.execute('SELECT batter FROM statcast').fetchall()
-uniqueBatterEntries = set(allBatterEntries)
-print(len(allBatterEntries))
-print(len(uniqueBatterEntries))
+allBatterEntries = statcastdb.execute("SELECT batter FROM statcast").fetchall()
+uniqueBatterEntriesSet = set(allBatterEntries)
+uniqueBatterEntriesList = list(uniqueBatterEntriesSet)
+playerIDLink = 'http://crunchtimebaseball.com/master.csv'
+playerID = pd.read_csv(playerIDLink, low_memory=False, encoding='latin-1') # Error if no low_memory
+playerIDNumber = list(playerID["mlb_id"])
+playerIDName = list(playerID["mlb_name"])
+
+for batterEntry in tqdm(uniqueBatterEntriesList, desc = 'Player IDs updated', leave = False):
+	row = playerIDNumber.index(batterEntry[0])
+	#print(playerIDName[row] + " | " + str(playerIDNumber[row]))
+	statcastdb.execute("UPDATE statcast SET batter_name=? WHERE batter=?", (playerIDName[row],playerIDNumber[row]))
+	statcastdb.execute("UPDATE statcast SET pos1_person_id=? WHERE pos1_person_id=?", (playerIDName[row],playerIDNumber[row]))
+	statcastdb.execute("UPDATE statcast SET pos2_person_id=? WHERE pos2_person_id=?", (playerIDName[row],playerIDNumber[row]))
+	statcastdb.execute("UPDATE statcast SET pos3_person_id=? WHERE pos3_person_id=?", (playerIDName[row],playerIDNumber[row]))
+	statcastdb.execute("UPDATE statcast SET pos4_person_id=? WHERE pos4_person_id=?", (playerIDName[row],playerIDNumber[row]))
+	statcastdb.execute("UPDATE statcast SET pos5_person_id=? WHERE pos5_person_id=?", (playerIDName[row],playerIDNumber[row]))
+	statcastdb.execute("UPDATE statcast SET pos6_person_id=? WHERE pos6_person_id=?", (playerIDName[row],playerIDNumber[row]))
+	statcastdb.execute("UPDATE statcast SET pos7_person_id=? WHERE pos7_person_id=?", (playerIDName[row],playerIDNumber[row]))
+	statcastdb.execute("UPDATE statcast SET pos8_person_id=? WHERE pos8_person_id=?", (playerIDName[row],playerIDNumber[row]))
+	statcastdb.execute("UPDATE statcast SET pos9_person_id=? WHERE pos9_person_id=?", (playerIDName[row],playerIDNumber[row]))
+	statcastdb.commit()
+	
 	
 # NOW WE DO THE MACHINE LEARNING STUFF!!!!!!

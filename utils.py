@@ -5,17 +5,8 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_array
-
-
-def load_housing_data(housing_path='.') -> pd.DataFrame:
-    return pd.read_csv(os.path.join(housing_path, 'housing.csv'))
-
-
-def split_train_test(data: pd.DataFrame, test_ratio: float) -> Tuple[pd.DataFrame]:
-    return train_test_split(data, test_size=test_ratio)
 
 
 class CategoricalEncoder(BaseEstimator, TransformerMixin):
@@ -196,29 +187,6 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
             return out.toarray()
         else:
             return out
-
-
-# column index
-rooms_ix, bedrooms_ix, population_ix, household_ix = 3, 4, 5, 6
-
-
-class CombinedAttributesAdder(BaseEstimator, TransformerMixin):
-
-    def __init__(self, add_bedrooms_per_room=True):  # no *args or **kwargs
-        self.add_bedrooms_per_room = add_bedrooms_per_room
-
-    def fit(self, X, y=None):
-        return self  # nothing else to do
-
-    def transform(self, X, y=None):
-        rooms_per_household = X[:, rooms_ix] / X[:, household_ix]
-        population_per_household = X[:, population_ix] / X[:, household_ix]
-        if self.add_bedrooms_per_room:
-            bedrooms_per_room = X[:, bedrooms_ix] / X[:, rooms_ix]
-            return np.c_[X, rooms_per_household, population_per_household,
-                         bedrooms_per_room]
-        else:
-            return np.c_[X, rooms_per_household, population_per_household]
 
 
 class DataFrameSelector(BaseEstimator, TransformerMixin):

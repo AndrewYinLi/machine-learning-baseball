@@ -1,0 +1,20 @@
+C:\Users\andre\Documents\GitHub\machine-learning-baseball>python scraper.py
+Attributes normalized:   0%|                                                                                                                                                               | 0/16 [00:00<?, ?it/s]
+Normalizing entries:  17%|#######################8                                                                                                                        | 16487/99421 [55:30<4:39:13,  4.95it/s]
+
+Traceback (most recent call last):
+  File "scraper.py", line 94, in <module>
+    zScore = (entry[1] - mean) / standardDeviation
+  File "C:\Users\andre\AppData\Local\Programs\Python\Python35\lib\site-packages\tqdm\_tqdm.py", line 977, in __iter__
+    self.moveto(self.pos)
+  File "C:\Users\andre\AppData\Local\Programs\Python\Python35\lib\site-packages\tqdm\_tqdm.py", line 1219, in moveto
+    self.fp.write(_unicode('\n' * n + _term_move_up() * -n))
+  File "C:\Users\andre\AppData\Local\Programs\Python\Python35\lib\site-packages\colorama\ansitowin32.py", line 40, in write
+    self.__convertor.write(text)
+  File "C:\Users\andre\AppData\Local\Programs\Python\Python35\lib\site-packages\colorama\ansitowin32.py", line 141, in write
+    self.write_and_convert(text)
+  File "C:\Users\andre\AppData\Local\Programs\Python\Python35\lib\site-packages\colorama\ansitowin32.py", line 169, in write_and_convert
+    self.write_plain_text(text, cursor, len(text))
+  File "C:\Users\andre\AppData\Local\Programs\Python\Python35\lib\site-packages\colorama\ansitowin32.py", line 174, in write_plain_text
+    self.wrapped.write(text[start:end])
+OSError: raw write() returned invalid length 4 (should have been between 0 and 2)

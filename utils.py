@@ -96,7 +96,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         self
         """
 
-        if self.encoding not in ['onehot', 'onehot-dense', 'ordinal']:
+        if self.encoding not in ['onehot', 'onehot-dense', 'onehot-dense-int', 'ordinal']:
             template = ("encoding should be either 'onehot', 'onehot-dense' "
                         "or 'ordinal', got %s")
             raise ValueError(template % self.handle_unknown)

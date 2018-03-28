@@ -190,22 +190,24 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
 
 class DataFrameSelector(BaseEstimator, TransformerMixin):
-    def __init__(self, attribute_names):
+    def __init__(self, attribute_names, as_df=False):
         self.attribute_names = attribute_names
+        self.as_df = as_df
 
     def fit(self, X, y=None):
         return self
 
     def transform(self, X):
-        return X[self.attribute_names].values
+        return X[self.attribute_names].values if not self.as_df else X[self.attribute_names]
     
     
 class DataFrameConverter(BaseEstimator, TransformerMixin):
-    def __init__(self, attribute_names):
+    def __init__(self, attribute_names, indices):
         self.attribute_names = attribute_names
+        self.indices = indices
         
     def fit(self, X, y=None):
         return self
     
     def transform(self, X):
-        return pd.DataFrame({col: X[:,i] for i, col in enumerate(self.attribute_names)})
+        return pd.DataFrame(data=X, columns=self.attribute_names, index=self.indices)

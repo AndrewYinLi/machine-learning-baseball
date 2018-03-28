@@ -198,3 +198,14 @@ class DataFrameSelector(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         return X[self.attribute_names].values
+    
+    
+class DataFrameConverter(BaseEstimator, TransformerMixin):
+    def __init__(self, attribute_names):
+        self.attribute_names = attribute_names
+        
+    def fit(self, X, y=None):
+        return self
+    
+    def transform(self, X):
+        return pd.DataFrame({col: X[:,i] for i, col in enumerate(self.attribute_names)})

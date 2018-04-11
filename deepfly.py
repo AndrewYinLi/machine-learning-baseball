@@ -56,16 +56,25 @@ data['game_date'] = data['game_date'].apply(lambda s: s[5:7])
 # Get continuous and discrete attributes
 continuous_attrs = np.array(data._get_numeric_data().columns)
 discrete_attrs = np.array([attr for attr in data.columns if attr not in continuous_attrs and attr != 'events'])
-labels = np.array(['hit' if event in hit_types else 'not_hit' for event in data['events']])
-del data['events']
-
-# Begin data preparation!
+# Double check...
 for attr in discrete_attrs:
     data[attr] = data[attr].astype(str)
+
+# To ensure the prepared data matrix is accurate
+if os.path.exists("entries.npy"):
+    entries = np.load("entries.npy")
+else:
+    entries = np.random.choice(data.shape[0], 50000, replace=False)
+    np.save("entries.npy", entries)
+labels = np.array(data['events'])
+del data['events']
+data_small = data.iloc[entries]
+labels_small = labels[entries]
 
 if verbose:
     print("Data cleaned.")
 
+# Begin data preparation!
 continuous_pipeline = Pipeline([
     ('selector', DataFrameSelector(continuous_attrs)),
     ('imputer', Imputer(strategy='median')),
@@ -89,7 +98,7 @@ if verbose:
 if os.path.exists("prepared.npy"):
     data_prepared = np.load("prepared.npy")
 else:
-    data_prepared = full_pipeline.fit_transform(data)
+    data_prepared = full_pipeline.fit_transform(data_small)
     np.save("prepared.npy", data_prepared)
 
 if verbose:

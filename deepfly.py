@@ -113,18 +113,20 @@ if verbose:
 
 labels_small_onehot = LabelBinarizer().fit_transform(labels_small)
 # Map string labels to encodings
+labels_small_cat = np.array([np.argmax(encoding) for encoding in labels_small_onehot])
 label_map = {}
 for label, encoding in zip(labels_small, labels_small_onehot):
-    label_map[np.where(encoding == 1)] = label
+    label_map[np.argmax(encoding)] = label
 
 
 # Deep Learning hyperparameters
 n_inputs = len(data_prepared[0])
 n_outputs = len(labels_small_onehot[0])
 
+# Set up train/test set
 train_indices, test_indices = train_test_split(list(range(len(data_prepared))), test_size=0.2)
-train_data, train_labels = data_prepared[train_indices], labels_small_onehot[train_indices]
-test_data, test_labels = data_prepared[test_indices], labels_small_onehot[test_indices]
+train_data, train_labels = data_prepared[train_indices], labels_small_cat[train_indices]
+test_data, test_labels = data_prepared[test_indices], labels_small_cat[test_indices]
 
 # Input tensor
 X = tf.placeholder(tf.float32, shape=(None, n_inputs), name='X')
@@ -206,8 +208,8 @@ with tf.Session() as sess:
         # Iterate through a number of mini-batches (enough to cover the whole training set)
         for iteration in range(n_batches):
             # Get our next batch of training data and targets
-            indices = np.random.choice(data_prepared.shape[0], batch_size, replace=False)
-            X_batch, y_batch = train_data[indices], train_lables[indices]
+            indices = np.random.choice(train_data.shape[0], batch_size, replace=False)
+            X_batch, y_batch = train_data[indices], train_labels[indices]
             # Run the network on the batch
             sess.run([training_op, extra_update_ops], feed_dict={X: X_batch, y: y_batch, training: True})
             accuracy_val, loss_val, accuracy_summary_str, loss_summary_str = sess.run(

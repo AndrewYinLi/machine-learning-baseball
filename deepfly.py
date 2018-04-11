@@ -218,21 +218,21 @@ with tf.Session() as sess:
             file_writer.add_summary(accuracy_summary_str, epoch)
             file_writer.add_summary(loss_summary_str, epoch)
 
-            if epoch % 5 == 0:
-                print("Epoch:", epoch,
-                      "\tTest accuracy: {:.3f}%".format(accuracy_val * 100),
-                      "\tLoss: {:.5f}".format(loss_val))
-                saver.save(sess, checkpoint_path)
-                with open(checkpoint_epoch_path, "wb") as f:
-                    f.write(b"%d" % (epoch + 1))
-                if loss_val < best_loss:
-                    saver.save(sess, final_model_path)
-                    best_loss = loss_val
-                else:
-                    epochs_without_progress += 5
-                    if epochs_without_progress > max_epochs_without_progress:
-                        print("Early stopping")
-                        break
+        if epoch % 5 == 0:
+            print("Epoch:", epoch,
+                  "\tTest accuracy: {:.3f}%".format(accuracy_val * 100),
+                  "\tLoss: {:.5f}".format(loss_val))
+            saver.save(sess, checkpoint_path)
+            with open(checkpoint_epoch_path, "wb") as f:
+                f.write(b"%d" % (epoch + 1))
+            if loss_val < best_loss:
+                saver.save(sess, final_model_path)
+                best_loss = loss_val
+            else:
+                epochs_without_progress += 5
+                if epochs_without_progress > max_epochs_without_progress:
+                    print("Early stopping")
+                    break
 
 os.remove(checkpoint_epoch_path)
 with tf.Session() as sess:

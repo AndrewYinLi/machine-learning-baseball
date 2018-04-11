@@ -3,6 +3,10 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import sqlalchemy
+from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.preprocessing import Imputer, StandardScaler
+
+from utils import DataFrameSelector, CategoricalEncoder
 
 # import data with sqlalchemy
 db = "raw2017.db"
@@ -48,3 +52,26 @@ continuous_attrs = np.array(data._get_numeric_data().columns)
 discrete_attrs = np.array([attr for attr in data.columns if attr not in continuous_attrs and attr != 'events'])
 labels = np.array(['hit' if event in hit_types else 'not_hit' for event in data['events']])
 del data['events']
+
+# Begin data preparation!
+for attr in discrete_attrs:
+    data[attr] = data[attr].astype(str)
+
+continuous_pipeline = Pipeline([
+    ('selector', DataFrameSelector(continuous_attrs)),
+    ('imputer', Imputer(strategy='median')),
+    ('std_scaler', StandardScaler())
+])
+
+discrete_pipeline = Pipeline([
+    ('selector', DataFrameSelector(discrete_attrs)),
+    ('encoder', CategoricalEncoder(encoding='onehot-dense'))
+])
+
+full_pipeline = FeatureUnion([
+    ('c_pipeline', continuous_pipeline),
+    ('d_pipeline', discrete_pipeline)
+])
+
+# Prepare the data!
+data_prepared = full_pipeline.fit_transform(data)

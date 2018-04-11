@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import sqlalchemy
 from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.preprocessing import Imputer, StandardScaler
+from sklearn.preprocessing import Imputer, StandardScaler, LabelBinarizer
 
 from utils import DataFrameSelector, CategoricalEncoder
 
@@ -64,7 +64,7 @@ for attr in discrete_attrs:
 if os.path.exists("entries.npy"):
     entries = np.load("entries.npy")
 else:
-    entries = np.random.choice(data.shape[0], 50000, replace=False)
+    entries = np.random.choice(data.shape[0], 10000, replace=False)
     np.save("entries.npy", entries)
 labels = np.array(data['events'])
 del data['events']
@@ -104,4 +104,4 @@ else:
 if verbose:
     print("Data prepared.")
 
-print(data_prepared)
+labels_small_onehot = LabelBinarizer().fit_transform(labels_small)

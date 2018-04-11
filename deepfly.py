@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 import numpy as np
@@ -8,12 +9,16 @@ from sklearn.preprocessing import Imputer, StandardScaler
 
 from utils import DataFrameSelector, CategoricalEncoder
 
+verbose = True
+
 # import data with sqlalchemy
 db = "raw2017.db"
 table = "statcast"
 
 engine = sqlalchemy.create_engine("sqlite:///%s" % db, execution_options={"sqlite_raw_colnames": True})
 data = pd.read_sql_table(table, engine)
+if verbose:
+    print("Connected to database.")
 
 
 def log_dir(prefix=""):
@@ -25,6 +30,8 @@ def log_dir(prefix=""):
     return "{}/{}/".format(root_log_dir, name)
 
 
+if verbose:
+    print("Cleaning data...")
 # Begin cleaning out bad attributes
 data = data[[col for col in data.columns if 'deprecated' not in col]]
 bad_attrs = ['des', 'at_bat_number', 'pitch_number', 'spin_dir', 'umpire', 'type', 'game_year', 'pos2_person_id.1',
@@ -41,7 +48,6 @@ data['strikes'] = data['strikes'].astype(str)
 for feature in [col for col in data.columns if col.endswith('id') or col.startswith('on')] + ['outs_when_up']:
     data[feature] = data[feature].astype(str)
 # Further discretization
-data['hit_location'] = data['hit_location'].astype(str)
 data['inning'] = data['inning'].astype(str)
 hit_types = {'single', 'double', 'triple', 'home_run'}
 # Turn date attribute into month
@@ -56,6 +62,9 @@ del data['events']
 # Begin data preparation!
 for attr in discrete_attrs:
     data[attr] = data[attr].astype(str)
+
+if verbose:
+    print("Data cleaned.")
 
 continuous_pipeline = Pipeline([
     ('selector', DataFrameSelector(continuous_attrs)),
@@ -74,4 +83,16 @@ full_pipeline = FeatureUnion([
 ])
 
 # Prepare the data!
-data_prepared = full_pipeline.fit_transform(data)
+if verbose:
+    print("Preparing data with pipeline...")
+
+if os.path.exists("prepared.npy"):
+    data_prepared = np.load("prepared.npy")
+else:
+    data_prepared = full_pipeline.fit_transform(data)
+    np.save("prepared.npy", data_prepared)
+
+if verbose:
+    print("Data prepared.")
+
+print(data_prepared)

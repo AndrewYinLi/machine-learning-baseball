@@ -326,16 +326,18 @@ def formRules(N, preconditions, rules):
 	elif N.attributeType == "Continuous":
 		# handling the '<= root' branch in the tree
 		newPreconditionsLess = copy.deepcopy(preconditions)
-		# knownRatio = N.numKnown_<=T /N. numKnown
-		preLessRoot = Precondition()
-		#preLessRoot = Precondition(N.attribute, VALUE???,knownRatio) # attribute, value, knownRatio
+		
+		# Passing in attribute, value, and known ratio (numKnown_<=T / numKnown)
+		preLessRoot = Precondition(N.attribute, N.threshold, N.distance["<="] / N.distance["<="] + N.distance[">"])
+		
 		newPreconditionsLess.append(preLessRoot)
 		formRules(N.children["<="], newPreconditionsLess, rules) # Recurse until we hit leaf
 
 		newPreconditionsMore = copy.deepcopy(newPreconditionsLess)
-		# knownRatio = N.numKnown_<=T /N. numKnown
-		preMoreRoot = Precondition()
-		#preMoreRoot = Precondition(N.attribute, VALUE???,knownRatio) # attribute, value, knownRatio
+		
+		# Passing in attribute, value, and known ratio (numKnown_>T / numKnown)
+		preMoreRoot = Precondition(N.attribute, N.threshold, N.distance[">"] / N.distance["<="] + N.distance[">"])
+
 		newPreconditionsMore.append(preMoreRoot)
 		formRules(N.children[">"], newPreconditionsMore, rules) # Recurse until we hit leaf
 	else:
@@ -361,7 +363,7 @@ def createAlternatives(rules):
 
 def calculateAccuracy(rules, validate):
 	print(rules)
-	#print(validate)
+	print(validate)
 	return 0
 
 

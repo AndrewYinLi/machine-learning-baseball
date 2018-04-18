@@ -5,6 +5,8 @@ import copy
 from collections import defaultdict
 from entry import Entry 
 from node import Node
+from rule import Rule
+from precondition import Precondition
 
 continuousGains = defaultdict(dict)
 
@@ -265,7 +267,7 @@ def c45(S,V,A):
 						if a != aStar:
 							newAttributes.append(a)
 					N.children[value] = c45(Sv, V, newAttributes)
-				else: #if continuous we do not take a out of A
+				else: #if continuous we do not take aStar out of A
 					N.children[value] = c45(Sv,V,A)
 		return N
 
@@ -313,6 +315,30 @@ def predict(x, root, labels):
 				maxVotes  = v
 		#predict the label with the highest vote
 		return prediction
+
+# N = node currently traversing to build the rules
+# preconditions = the list of attribute/value pairs along the current path from the root of the tree to a leaf
+# rules = the list in which we save the rules for each leaf
+def formRules(N, preconditions, rules):
+	if N.isLeaf(): # if n is a leaf, create a new rule
+		newRule = Rule(N.label, preconditions)
+		rules.append(newRule)
+	elif N.attributeType == "Continuous":
+
+		# handling the '<= root' branch in the tree
+		newPreconditionsLess = copy.deepcopy(preconditions)
+		# knownRatio = N.numKnown_<=T /N. numKnown
+		#preLessRoot = Precondition() # attribute, value, knownRatio
+		#newPreconditionsLess.append(preLessRoot)
+		print(N.children["<="])
+
+
+
+
+# rules = the set of rules from the tree learned by C4.5
+# valid = the validation set of instances
+def prune(rules,valid):
+	return None
 	
 def main():
 	fileName = sys.argv[1]
@@ -352,12 +378,21 @@ def main():
 	file.close()
 	random.seed(seed)
 	random.shuffle(entries)
-	decimalTrainingPercentage = (int) (len(entries) * trainingPercentage)//1
-	training = entries[0:decimalTrainingPercentage]
+	decimalTrainingPercentage = (int) (len(entries) * trainingPercentage) // 1
+	decimalValidationPercentage = (int) (0.2 * decimalTrainingPercentage) // 1
+	training = entries[0:decimalTrainingPercentage] # Get training set
+	validate = training[0:decimalValidationPercentage] # Take part of training set for validation set
+	training = training[decimalValidationPercentage:len(training)] # Remove validation subset from initial training set
 	test = entries[decimalTrainingPercentage:len(entries)]
 
-	
 	root = c45(training, values, attributes)
+	rules = []
+	formRules(root, [], rules)
+	finalRules = prune(rules, validate)
+	print("Final rules: " + finalRules)
+
+
+
 	labelsList = list(labels)
 	confusionMatrix=defaultdict(dict)
 	for i in range(len(labelsList)):

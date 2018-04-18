@@ -24,6 +24,9 @@ class Node:
 	def setAttribute(self, attribute):
 		self.attribute = attribute
 
+	def setThreshold(self, threshold):
+		self.threshold = threshold
+
 	def setDistance(self, S, attributeType):  #must add attribute before use
 
 		self.distance = {}
@@ -43,7 +46,7 @@ class Node:
 				if total == 0:
 					break
 				self.distance[value] = self.distance[value]/total
-			#print(self.distance)
+			
 		elif attributeType == "Continuous":
 			self.distance[">"] = 0
 			self.distance["<="] = 0
@@ -60,8 +63,6 @@ class Node:
 				if total == 0:
 					break
 				self.distance[value] = self.distance[value]/total
-
-		
 
 	def addChildren(self, values):
 		self.children = {}

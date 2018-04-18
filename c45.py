@@ -243,7 +243,7 @@ def c45(S,V,A):
 		N.setAttribute(aStar)
 		if aStar in attributeThresholds.keys(): #will determine if aStar has continuous values
 			aVals = ["<=", ">"]
-			N.threshold = attributeThresholds[aStar]
+			N.setThreshold(attributeThresholds[aStar])
 			N.setDistance(S,"Continuous")
 		else:
 			N.setDistance(S,"Nominal")
@@ -324,21 +324,73 @@ def formRules(N, preconditions, rules):
 		newRule = Rule(N.label, preconditions)
 		rules.append(newRule)
 	elif N.attributeType == "Continuous":
-
 		# handling the '<= root' branch in the tree
 		newPreconditionsLess = copy.deepcopy(preconditions)
 		# knownRatio = N.numKnown_<=T /N. numKnown
-		#preLessRoot = Precondition() # attribute, value, knownRatio
-		#newPreconditionsLess.append(preLessRoot)
-		print(N.children["<="])
+		preLessRoot = Precondition()
+		#preLessRoot = Precondition(N.attribute, VALUE???,knownRatio) # attribute, value, knownRatio
+		newPreconditionsLess.append(preLessRoot)
+		formRules(N.children["<="], newPreconditionsLess, rules) # Recurse until we hit leaf
+
+		newPreconditionsMore = copy.deepcopy(newPreconditionsLess)
+		# knownRatio = N.numKnown_<=T /N. numKnown
+		preMoreRoot = Precondition()
+		#preMoreRoot = Precondition(N.attribute, VALUE???,knownRatio) # attribute, value, knownRatio
+		newPreconditionsMore.append(preMoreRoot)
+		formRules(N.children[">"], newPreconditionsMore, rules) # Recurse until we hit leaf
+	else:
+		for child in N.children:
+			newPreconditions = copy.deepcopy(preconditions)
+			pre = Precondition()
+			# pre.setKnownRatio(N.numKnown_v / N.numKnown)
+			newPreconditions.append(pre)
+
+			#formRules(N.child["v?????"], newPreconditions, rules) # Recurse until we hit a leaf
 
 
+# Creates a list of alternative rules by removing each precondition separately
+# rules = set of rules to manipulate
+def createAlternatives(rules):
+	alternativeRules = []
+	for i in range(len(rules.preconditions)):
+		alternativeRule = []
+		for j in range(len(rules.preconditions)):
+			if i != j:
+				alternativeRule.append(rules.preconditions[j])
+		alternativeRules.append(alternativeRule)
+
+def calculateAccuracy(rules, validate):
+	print(rules)
+	#print(validate)
+	return 0
 
 
 # rules = the set of rules from the tree learned by C4.5
 # valid = the validation set of instances
-def prune(rules,valid):
-	return None
+def prune(rules,validate):
+	ruleStack = rules
+	finalRules = []
+	while len(ruleStack) > 0:
+		r = ruleStack.pop()
+		if len(r.preconditions) == 1:
+			finalRules.append(r)
+		else:
+			alternativeRules = createAlternatives(r)
+			r.setAccuracy(calculateAccuracy(r, validate))
+			bestRule = r
+			for alternativeRule in alternativeRules:
+				if alternativeRule.accuracy > bestRule.accuracy:
+					bestRule = alternativeRule
+			if bestRule == r:
+				finalRules.append(r)
+			else:
+				ruleStack.append(bestRule)
+	return finalRules
+
+
+
+
+
 	
 def main():
 	fileName = sys.argv[1]
@@ -389,8 +441,7 @@ def main():
 	rules = []
 	formRules(root, [], rules)
 	finalRules = prune(rules, validate)
-	print("Final rules: " + finalRules)
-
+	print("Final rules: " + str(finalRules))
 
 
 	labelsList = list(labels)

@@ -8,7 +8,7 @@ class Rule:
 	def __init__(self, label, preconditions):
 		self.label = label
 		self.preconditions = preconditions
-		self.accuracy = None
+		self.accuracy = -1
 		
 	def setLabel(self, label):
 		self.label = label

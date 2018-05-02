@@ -90,7 +90,10 @@ def splitInformation(S, a, values):
 	entropy = 0.0
 	for value in values:
 		Sv = filterInstances(S, a, value)
-		p = getWeight(Sv) / getWeight(S)
+		if getWeight(S) != 0:
+			p = getWeight(Sv) / getWeight(S)
+		else:
+			p = 0
 		if p != 0:
 			entropy -= p * math.log(p,2)
 	return entropy
@@ -148,7 +151,10 @@ def getEntropy(S):
 		else:
 			sigma[entry.label] = entry.weight
 	for key in sigma.keys():
-		p = float(sigma[key]) / getWeight(S)
+		if getWeight(S) != 0:
+			p = float(sigma[key]) / getWeight(S)
+		else: 
+			p = 0
 		if p != 0:
 			getEntropy -= p * math.log(p,2)
 	return getEntropy
@@ -328,7 +334,7 @@ def formRules(N, preconditions, rules):
 		newPreconditionsLess = copy.deepcopy(preconditions)
 		
 		# Passing in attribute, value, and known ratio (numKnown_<=T / numKnown)
-		preLessRoot = Precondition(N.attribute, N.threshold, N.distance["<="] / N.distance["<="] + N.distance[">"])
+		preLessRoot = Precondition(N.attribute, N.threshold, (N.distance["<="] / N.total))
 		
 		newPreconditionsLess.append(preLessRoot)
 		formRules(N.children["<="], newPreconditionsLess, rules) # Recurse until we hit leaf
@@ -336,18 +342,21 @@ def formRules(N, preconditions, rules):
 		newPreconditionsMore = copy.deepcopy(newPreconditionsLess)
 		
 		# Passing in attribute, value, and known ratio (numKnown_>T / numKnown)
-		preMoreRoot = Precondition(N.attribute, N.threshold, N.distance[">"] / N.distance["<="] + N.distance[">"])
+		preMoreRoot = Precondition(N.attribute, N.threshold, (N.distance[">"] / N.total))
 
 		newPreconditionsMore.append(preMoreRoot)
 		formRules(N.children[">"], newPreconditionsMore, rules) # Recurse until we hit leaf
 	else:
-		for child in N.children:
+		for child in N.children.values():
 			newPreconditions = copy.deepcopy(preconditions)
-			pre = Precondition()
+			if child.total == 0:
+				pre = Precondition(child.attribute, child.threshold, 0)
+			else:
+				pre = Precondition(child.attribute, child.threshold, (child.sameAttributes / child.total))
 			# pre.setKnownRatio(N.numKnown_v / N.numKnown)
 			newPreconditions.append(pre)
 
-			#formRules(N.child["v?????"], newPreconditions, rules) # Recurse until we hit a leaf
+			formRules(child, newPreconditions, rules) # Recurse until we hit a leaf
 
 
 # Creates a list of alternative rules by removing each precondition separately
@@ -355,16 +364,27 @@ def formRules(N, preconditions, rules):
 def createAlternatives(rules):
 	alternativeRules = []
 	for i in range(len(rules.preconditions)):
-		alternativeRule = []
+		alternativePreconditions = []
 		for j in range(len(rules.preconditions)):
 			if i != j:
-				alternativeRule.append(rules.preconditions[j])
+				alternativePreconditions.append(rules.preconditions[j])
+		alternativeRule = Rule(rules.label, alternativePreconditions)
 		alternativeRules.append(alternativeRule)
+	return alternativeRules
 
 def calculateAccuracy(rules, validate):
-	print(rules)
-	print(validate)
-	return 0
+	total = 0
+	correct = 0
+	for precondition in rules.preconditions:
+		for entry in validate:
+			for key, value in entry.attribute.items():
+				if key == precondition.attribute:
+					total += 1
+					if value == precondition.value:
+						correct += 1
+	accuracy = correct / total
+	#print(accuracy)
+	return accuracy
 
 
 # rules = the set of rules from the tree learned by C4.5
@@ -373,14 +393,18 @@ def prune(rules,validate):
 	ruleStack = rules
 	finalRules = []
 	while len(ruleStack) > 0:
+		print(len(ruleStack))
 		r = ruleStack.pop()
 		if len(r.preconditions) == 1:
 			finalRules.append(r)
 		else:
 			alternativeRules = createAlternatives(r)
-			r.setAccuracy(calculateAccuracy(r, validate))
+			if r.accuracy < 0:
+				r.setAccuracy(calculateAccuracy(r, validate))
 			bestRule = r
 			for alternativeRule in alternativeRules:
+				if alternativeRule.accuracy < 0:
+					alternativeRule.setAccuracy(calculateAccuracy(alternativeRule, validate))
 				if alternativeRule.accuracy > bestRule.accuracy:
 					bestRule = alternativeRule
 			if bestRule == r:
@@ -389,18 +413,14 @@ def prune(rules,validate):
 				ruleStack.append(bestRule)
 	return finalRules
 
-
-
-
-
 	
 def main():
 	fileName = sys.argv[1]
 	trainingPercentage = eval(sys.argv[2])  #Training Set Percent
 	prunePercentage= eval(sys.argv[3])
-	if prunePercentage > 0:
-		print("Error: pruning percentage is greater than 0!")
-		quit()
+	#if prunePercentage > 0:
+	#	print("Error: pruning percentage is greater than 0!")
+	#	quit()
 	seed = eval(sys.argv[4])
 	outputname="results_C45_NotPruned_"+fileName+"_"+str(seed)+".csv"
 	file = open(fileName, "r")
@@ -432,18 +452,23 @@ def main():
 	file.close()
 	random.seed(seed)
 	random.shuffle(entries)
+
 	decimalTrainingPercentage = (int) (len(entries) * trainingPercentage) // 1
-	decimalValidationPercentage = (int) (0.2 * decimalTrainingPercentage) // 1
-	training = entries[0:decimalTrainingPercentage] # Get training set
-	validate = training[0:decimalValidationPercentage] # Take part of training set for validation set
-	training = training[decimalValidationPercentage:len(training)] # Remove validation subset from initial training set
-	test = entries[decimalTrainingPercentage:len(entries)]
+	if prunePercentage == 0:
+		training = entries[0:decimalTrainingPercentage] # Get training set
+		test = entries[decimalTrainingPercentage:len(entries)]
+	else:
+		training = entries[0:decimalTrainingPercentage] # Get training set
+		decimalValidationPercentage = (int) (len(entries) * prunePercentage) // 1
+		validate = entries[decimalTrainingPercentage:(decimalValidationPercentage + decimalTrainingPercentage)]
+		test = entries[(decimalValidationPercentage + decimalTrainingPercentage):len(entries)]
 
 	root = c45(training, values, attributes)
-	rules = []
-	formRules(root, [], rules)
-	finalRules = prune(rules, validate)
-	print("Final rules: " + str(finalRules))
+	if prunePercentage > 0:
+		rules = []
+		formRules(root, [], rules)
+		finalRules = prune(rules, validate)
+		print("Final rules: " + str(finalRules))
 
 
 	labelsList = list(labels)

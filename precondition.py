@@ -5,10 +5,10 @@ import copy
 from collections import defaultdict
 
 class Precondition:
-	def __init__(self):
-		self.attribute = None
-		self.value = None
-		self.knownRatio = None
+	def __init__(self, attribute, value, knownRatio):
+		self.attribute = attribute
+		self.value = value
+		self.knownRatio = knownRatio
 
 	def setAttribute(self, attribute):
 		self.attribute = attribute

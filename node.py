@@ -12,6 +12,8 @@ class Node:
 		self.distance = None  #saving the distribution as a dictionary
 		self.threshold = None
 		self.attributeType = None
+		self.sameAttributes = 0
+		self.total = 0
 
 	def isLeaf(self):
 		if self.label != None:
@@ -31,21 +33,22 @@ class Node:
 
 		self.distance = {}
 		self.attributeType = attributeType
-		total = 0
 		if attributeType == "Nominal":
 			for entry in S:
 				value = entry.attribute[self.attribute]
 				if value == "?":
 					continue
-				total += 1
+				if value == self.attribute:
+					self.sameAttributes += 1
+				self.total += 1
 				if value in self.distance.keys():
 					self.distance[value] += 1
 				else:
 					self.distance[value] = 1
 			for value in self.distance.keys():
-				if total == 0:
+				if self.total == 0:
 					break
-				self.distance[value] = self.distance[value]/total
+				self.distance[value] = self.distance[value]/self.total
 			
 		elif attributeType == "Continuous":
 			self.distance[">"] = 0
@@ -54,15 +57,15 @@ class Node:
 				value = entry.attribute[self.attribute]
 				if value == "?":
 					continue
-				total+=1
+				self.total+=1
 				if value > self.threshold:
 					self.distance[">"] +=1
 				else:
 					self.distance["<="] +=1
 			for value in self.distance.keys():
-				if total == 0:
+				if self.total == 0:
 					break
-				self.distance[value] = self.distance[value]/total
+				self.distance[value] = self.distance[value]/self.total
 
 	def addChildren(self, values):
 		self.children = {}

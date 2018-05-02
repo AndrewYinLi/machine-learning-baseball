@@ -307,20 +307,40 @@ def findVotes(x, root, votes):
 #root is the root node of the tree
 #return:
 #prediction: the predicted label for x
-def predict(x, root, labels):
-		votes = {}
-		for label in labels:
-			votes[label] = 0
-		votes = findVotes(x, root, votes)
-		prediction = ""
+#def predict(x, root, labels):
+	#	votes = {}
+	#	for label in labels:
+	#		votes[label] = 0
+	#	votes = findVotes(x, root, votes)
+	#	prediction = ""
 		#find the label with the highest vote
-		maxVotes = 0
-		for k,v in votes.items():
-			if v > maxVotes:
-				prediction = k
-				maxVotes  = v
+	#	maxVotes = 0
+	#	for k,v in votes.items():
+	#		if v > maxVotes:
+	#			prediction = k
+	#			maxVotes  = v
 		#predict the label with the highest vote
-		return prediction
+	#	return prediction
+
+def predict(x, rules, root, labels, values):
+	for rule in rules:
+		#print(rule.preconditions)
+		for precondition in rule.preconditions:
+			match = True
+			for key, value in x.attribute.items():
+				#print(key + " | " + precondition.attribute)
+				if key == precondition.attribute:
+					if value == "?":
+						print("Value is missing, just like my sanity. :'(")
+					if value != precondition.value:
+						match = False
+						break
+			if match:
+				return rule.label
+
+
+
+
 
 # N = node currently traversing to build the rules
 # preconditions = the list of attribute/value pairs along the current path from the root of the tree to a leaf
@@ -375,14 +395,25 @@ def createAlternatives(rules):
 def calculateAccuracy(rules, validate):
 	total = 0
 	correct = 0
-	for precondition in rules.preconditions:
-		for entry in validate:
+
+	for entry in validate:
+		matches = 0
+		for precondition in rules.preconditions:
+			match = True
 			for key, value in entry.attribute.items():
+				#print(key + " | " + precondition.attribute)
 				if key == precondition.attribute:
-					total += 1
-					if value == precondition.value:
-						correct += 1
-	accuracy = correct / total
+					if value != precondition.value:
+						match = False
+						break
+			if match:
+				total += 1
+				if rules.label == entry.label:
+					correct += 1
+	if total != 0:
+		accuracy = correct / total
+	else:
+		accuracy = 0
 	#print(accuracy)
 	return accuracy
 
@@ -468,7 +499,7 @@ def main():
 		rules = []
 		formRules(root, [], rules)
 		finalRules = prune(rules, validate)
-		print("Final rules: " + str(finalRules))
+		#print("Final rules: " + str(finalRules))
 
 
 	labelsList = list(labels)
@@ -478,7 +509,7 @@ def main():
 			confusionMatrix[labelsList[i]][labelsList[j]]=0
 	confusionMatrixDict=dict(confusionMatrix)
 	for entry in test:
-		prediction = predict(entry, root, labels)
+		prediction = predict(entry, finalRules, root, labels, values)
 		confusionMatrixDict[entry.label][prediction] +=1
 
 	correct = 0

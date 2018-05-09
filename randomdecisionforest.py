@@ -13,9 +13,6 @@ def main():
 		fileName = sys.argv[1]
 		trainingPercentage = eval(sys.argv[2])  #Training Set Percent
 		prunePercentage= eval(sys.argv[3])
-		#if prunePercentage > 0:
-		#	print("Error: pruning percentage is greater than 0!")
-		#	quit()
 		seed = eval(sys.argv[4])
 		outputname="results_C45_Pruned_"+fileName+"_"+str(seed)+".csv"
 		file = open(fileName, "r")
@@ -41,9 +38,16 @@ def main():
 				entry.setAttributes(attributes, fileLine[1:len(fileLine)])
 				entries.append(entry)
 				for i in range(1, len(fileLine)):
-					if fileLine[i] != "?":
+					if fileLine[i] != "?": # and not fileLine[i].isspace():
 						if fileLine[i] not in values[attributes[i-1]]:
-							values[attributes[i-1]].append(fileLine[i])
+							fileLineObj = fileLine[i]
+							if isinstance(fileLineObj,str):
+								if len(fileLineObj) > 1:
+									if fileLineObj[0] == '-' and str(int(float(fileLineObj[1:]))).isdigit():
+										fileLineObj = -1 * eval(fileLineObj[1:])
+							
+							values[attributes[i-1]].append(fileLineObj)
+
 		file.close()
 		random.seed(seed)
 		random.shuffle(entries)

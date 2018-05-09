@@ -10,6 +10,13 @@ from precondition import Precondition
 
 class C45:
 
+	def isdigitnegative(toTest):
+		if isinstance(toTest,str):
+			if len(toTest) > 1:
+				if toTest[0] == '-' and str(int(float(toTest[1:]))).isdigit():
+					return -1 * eval(toTest[1:])
+		return toTest
+
 	def getWeight(self, S):
 		weight = 0.0
 		for entry in S:
@@ -164,10 +171,11 @@ class C45:
 	def calculateThreshold(self, S,a):
 		sorted = []
 		for entry in S:
-			if entry.attribute[a] != "?": 
-				value=entry.attribute[a]
-				label=entry.label
+			if entry.attribute[a] != "?": # and not entry.attribute[a].isspace(): 
+				value = isdigitnegative(entry.attribute[a])
+				label = entry.label
 				sorted.append((label,value))
+		print(sorted)
 		sorted.sort(key=lambda tup: tup[1],reverse=False)
 		thresholds=[]
 
@@ -220,10 +228,16 @@ class C45:
 			for a in A:
 				values = V[a]
 				continuous = False
-				for value in values: 
-					if value.isdigit(): #test if value is continuous
-						continuous = True
-						break
+				for value in values:
+					try: 
+						try:
+							int(isdigitnegative(value))
+							continuous = True
+						except:
+							pass
+					except:
+						pass
+					break
 				if continuous != True: #use the normal functions
 					splits = self.splitInformation(S, a, values)
 					if splits == 0:

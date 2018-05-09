@@ -1,5 +1,13 @@
 import sys
-
+import random
+import math
+import copy
+from c45 import C45
+from collections import defaultdict
+from entry import Entry 
+from node import Node
+from rule import Rule
+from precondition import Precondition
 
 def main():
 		fileName = sys.argv[1]
@@ -50,45 +58,8 @@ def main():
 			validate = entries[decimalTrainingPercentage:(decimalValidationPercentage + decimalTrainingPercentage)]
 			test = entries[(decimalValidationPercentage + decimalTrainingPercentage):len(entries)]
 
-		root = c45(training, values, attributes)
-		if prunePercentage > 0:
-			rules = []
-			formRules(root, [], rules)
-			finalRules = prune(rules, validate)
-			#print("Final rules: " + str(finalRules))
-
-
-		labelsList = list(labels)
-		confusionMatrix=defaultdict(dict)
-		for i in range(len(labelsList)):
-			for j in range(len(labelsList)):
-				confusionMatrix[labelsList[i]][labelsList[j]]=0
-		confusionMatrixDict=dict(confusionMatrix)
-		for entry in test:
-			if prunePercentage == 0:
-				prediction = predictNoPrune(entry,root,labels)
-			else:
-				prediction = predict(entry, finalRules, root, labels, values)
-			confusionMatrixDict[entry.label][prediction] +=1
-
-		correct = 0
-		total = 0
-		
-		with open(outputname, 'w') as f:
-			for i in range(len(labelsList)):
-				f.write(labelsList[i]+",")
-			f.write("\n")
-			for i in range(len(labelsList)):
-				for j in range(len(labelsList)):
-					f.write(str(confusionMatrixDict[labelsList[i]][labelsList[j]])+",")
-					if i == j:
-						correct += confusionMatrixDict[labelsList[i]][labelsList[j]]
-					total += confusionMatrixDict[labelsList[i]][labelsList[j]]
-
-				f.write(labelsList[i]+",")
-				f.write("\n")
-		f.close()
-		print(str(correct / total))
+		tree = C45(training, values, attributes, validate, prunePercentage)
+		tree.fit(test, labels, outputname)
 
 
 if __name__ == '__main__':
